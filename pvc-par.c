@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <mpi.h>
 
+
+
 int main(int argc, char** argv){
     int process_rank, size_Of_Cluster;
 
