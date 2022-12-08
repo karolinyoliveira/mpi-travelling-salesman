@@ -1,3 +1,6 @@
+/////////////////////// IMPORTAÇÕES E DEFINIÇÕES //////////////////////////////
+
+// Dedendências
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -8,6 +11,26 @@ typedef struct _graph_t {
     int **weights;
 } graph_t;
 
+// Caminho percorrido no grafo
+typedef struct _path_t {
+    int *nodes;
+    int cost;
+    int size;
+} path_t;
+
+// Booleano
+typedef char bool;
+#define TRUE 1
+#define FALSE 0
+
+// Constantes de ambiente
+#define RANDOM_SEED 32
+#define START_NODE 0
+#define MIN_WEIGHT 1
+#define MAX_WEIGHT 100
+
+
+//////////////////////////////// GRAFO ////////////////////////////////////////
 
 // Desaloca um grafo
 void free_graph(graph_t *graph){
@@ -16,6 +39,12 @@ void free_graph(graph_t *graph){
         free(graph->weights[i]);
     free(graph->weights);
     free(graph);
+}
+
+
+// Gera um inteiro no intervalo [lb, up]
+int generate_int(int lb, int up) {
+    return (rand() %(up - lb + 1)) + lb;
 }
 
 
@@ -45,7 +74,7 @@ graph_t *generate_graph(int order, int seed) {
     for(i=0; i<order; ++i){
         weights[i] = (int *) malloc(order * sizeof(int));
         for(j=0; j<order; ++j){
-            weights[i][j] = rand();
+            weights[i][j] = generate_int(MIN_WEIGHT, MAX_WEIGHT);
         }
     }
 
@@ -60,8 +89,25 @@ graph_t *generate_graph(int order, int seed) {
 }
 
 
+// Imprime um grafo
+void print_graph(graph_t *graph) {
+    printf("graph:\n");
+    int **w = graph->weights;
+    int order=graph->order;
+    int i,j;
+    for(i=0; i<order; ++i){
+        for(j=0; j<order-1; ++j)
+            printf("%d ", w[i][j]);
+        printf("%d\n", w[i][j]);
+    }
+    printf("\n");
+}
+
+
+///////////////////////// LISTA DE INTEIROS ///////////////////////////////////
+
 // Gera uma lista de inteiros com o tamanho fornecido
-int *generate_list(int length) {
+int *generate_int_list(int length) {
     if(length < 1){
         printf("length must be greater than zero\n");
         return NULL;
@@ -75,176 +121,170 @@ int *generate_list(int length) {
 }
 
 
-// Estrutura de um caminho ao longo de um grafo
-typedef struct _path_t {
-    /* Guarda os índices relativos de visita de um nó; se um valor 
-    for igual a 0, significa que ele não foi visitado. */
-    int *visits;
-    // Comprimento do vetor de visitas
-    int length;
-    // Contagem de visitas
-    int count;
-} path_t;
+// Copia uma lista de inteiros a outra
+void copy_int_list(int *src, int *dest, int len) {
+    int i;
+    for(i=0; i<len; ++i)
+        dest[i] = src[i];
+}
 
+
+// Imprime uma lista de inteiros
+void print_int_list(int *list, int len) {
+    int i, lim=len-1;
+    printf("[");
+    for(i=0; i<lim; ++i)
+        printf("%d, ", list[i]);
+    printf("%d]\n", list[i]);
+}
+
+
+////////////////////////////// CAMINHOS ///////////////////////////////////////
 
 // Inicializa um caminho
-int start_path(path_t *path, int size, int start_node) {
-    path->visits = generate_list(size);
-    path->visits[start_node] = 1;
-    path->length = size;
-    path->count = 0;
-    return EXIT_SUCCESS;
+void start_path(path_t *path, int size){
+    path->nodes = generate_int_list(size);
+    path->size = size;
+    path->cost = 0;
 }
 
 
-// Estrutura de iteração ao longo dos nós adjacentes
-typedef struct _adj_iterator_t {
-    int node;
-    path_t *path;
-    int *weights;
-    int itr;
-} adj_iterator_t;
-
-
-// Habilita um iterador de adjacências de um nó
-// iterator deve ser informado a partir de uma instância pré-existente
-int start_adj_iterator(adj_iterator_t *iterator, int node, path_t *path, int *weights) {
-
-    // Atribuição
-    iterator->node = node;
-    iterator->path = path;
-    iterator->weights = weights;
-    iterator->itr = 0;
-
-    return EXIT_SUCCESS;
+// Obtém o custo de um caminho
+void calculate_path_cost(path_t *path, int **weights){
+    int i, cost = 0;
+    for(i=1; i<path->size; ++i)
+        cost += weights[path->nodes[i-1]][path->nodes[i]];
+    path->cost = cost;
 }
 
 
-// Verifica se há um próximo elemento
-int adj_iterator_has_next(adj_iterator_t *iterator){
-    return iterator->itr < iterator->path->length;
-}
-
-
-// Retorna o próximo elemento do iterador de adjacências
-int adj_iterator_get_next(adj_iterator_t *iterator){
-    while (
-        iterator->weights[iterator->itr] > 0 && 
-        iterator->path->visits[iterator->itr] == 0 && 
-        iterator->itr < iterator->path->length
-    ){
-        iterator->itr = iterator->itr + 1;
-    }
-    if(iterator->itr >= iterator->path->length){
-        return -1;
-    }
-    return iterator->itr;
-}
-
+//////////////////// PROBLEMA DO CAIXEIRO VIAJANTE ////////////////////////////
 
 /**
- * @brief Função recursiva que constrói os caminhos, e retorna, via referência, o ótimo dentre eles.
- * @param graph Grafo representante do problema a ser resolvido.
- * @param optimal_path Caminho ótimo a ser retornado
- * @param current_path Caminho sendo percorrido atualmente.
- */
-int recursive_tsp_path(
-    graph_t *graph, 
-    path_t *optimal_path, 
-    path_t *current_path
-) {
-    return 0;
-}
-
-
-/* Enumera todos os caminhos hamiltonianos, 
-imprimindo-os na tela; retorna o menor caminho. */
-path_t *enumerate_tsp_paths(graph_t *graph) {
-
-    // Verificação
-    if(graph == NULL){
-        printf("informed graph is NULL\n");
-        return NULL;
-    }
-
-    // Informações de caminho
-    int *optimal_visits = NULL;
-    int optimal_cost = INT_MAX;
-    int optimal_count = 0;
-    path_t *optimal_path = NULL;
-    path_t current_path;
-
-    // Informações de iteração
-    int start_node, path_cost;
-    adj_iterator_t iterator;
-
-    // Para cada nó de início
-    for(start_node=0; start_node<graph->order; ++start_node){
-
-        // Inicialização
-        start_path(&current_path, graph->order, start_node);
-        start_adj_iterator(&iterator, start_node, &current_path, graph->weights[start_node]);
-        path_cost = 0;
-
-        // Finalização
-        free(current_path.visits);
-    }
-
-    // Finalização
-    optimal_path = (path_t *) malloc(sizeof(path_t));
-    optimal_path->count = optimal_count;
-    optimal_path->length = graph->order;
-    optimal_path->visits = optimal_visits;
-    return optimal_path;
-}
-
-
-/** 
- * Recupera a lista de adjacências válidas de um nó
+ * @brief Função de recursão da enumeração de caminhos.
  * 
- * Parâmetros:
- * ------------
- * graph:
- *  Grafo em questão.
- * node:
- *  Índice relativo do nó em questão.
- * path: 
- *  Deve ser uma lista com a quantia de nós do grafo fornecido, 
- *  em que mantém a contagem relativa de visita de cada um desses nós. 
- *  Caso um valor seja igual a zero, considerará que o nó correspondente 
- *  não foi visitado.
- * adj:
- *  Lista de adjacências a ser construída.
- * adj_len:
- *  Ponteiro para um inteiro, que receberá o comprimento da lista de adjacências.
+ * @param graph Grafo representante do problema.
+ * @param visited Vetor de visitas aos nós. Deve ter comprimento = graph->order.
+ * @param opt_path Caminho ótimo local para os nós. Deve ter comprimento = graph->order + 1
+ * @param path Caminho dos nós. Deve ter comprimento = graph->order + 1.
+ * @param step Passo atual. Não deve nem alcançar nem ultrapassar graph->order.
+ * @param node Nó atual. Deve pertencer ao grafo.
  */
-int valid_adj (
-    graph_t *graph, 
-    int node, 
-    int *path, 
-    int *adj, 
-    int *adj_len
-) {
-    // Desempacotamento (para performance)
-    int order = graph->order;
-    int **weights = graph->weights;
+int path_enumeration_recursion (
+    const graph_t *graph, 
+    path_t *opt_path, 
+    path_t *path, 
+    bool *visited, 
+    int step, 
+    int node
+){
+    // Atualização
+    path->nodes[step] = node;
 
-    // Demais variáveis locais
-    int adj_iterator=0, next_node;
+    // Variáveis locais
+    int cost, next_node, order=graph->order;
 
-    // Verificação dos nós adjacentes àquele informado
-    for(next_node=0; next_node<order; ++next_node){
-        if(weights[node][next_node] > 0 && path[next_node] <= 0){
-            adj[adj_iterator] = next_node;
-            ++adj_iterator;
+    //printf("step: %d; node: %d\n", step, node);
+
+    // Finalização do caminho
+    if(step == order - 1){
+
+        //printf("__end__\n");
+
+        // Verificação de possibilidade de retorno ao nó inicial
+        cost = graph->weights[node][path->nodes[0]];
+        if(cost != 0) {
+
+            // Atualização do caminho
+            path->nodes[step+1] = path->nodes[0];
+            calculate_path_cost(path, graph->weights);
+
+            // Verificação de otimalidade
+            if(path->cost < opt_path->cost) {
+                copy_int_list(path->nodes, opt_path->nodes, path->size);
+                opt_path->cost = path->cost;
+            }
+
+            // Impressão do caminho
+            printf("cost = %d; path = ", path->cost);
+            print_int_list(path->nodes, path->size);
+
+            return EXIT_SUCCESS;
+        }
+
+        return EXIT_FAILURE;
+    }
+
+    // Verificação das adjacências do nó
+    for(next_node = 0; next_node<order; ++next_node) {
+
+        // Verificação de alcance
+        if(visited[next_node] == FALSE) {
+            cost = graph->weights[node][next_node] != 0;
+            if(cost != 0) {
+
+                // Recursão
+                visited[next_node] = TRUE;
+                path_enumeration_recursion(graph, opt_path, path, visited, step+1, next_node);
+
+                // Desfaz alterações para manter estabilidade da recursão
+                visited[next_node] = FALSE;
+            }
         }
     }
-    *adj_len = adj_iterator;
 
     return EXIT_SUCCESS;
 }
 
 
+// Enumeração dos possíveis caminhos do problema do caixeiro viajante
+int start_path_enumeration(const graph_t *graph, int start_node) {
+
+    // Geração de vetores de utilidade
+    int order = graph->order;
+    bool *visited = (bool *) calloc(order, sizeof(bool));
+    path_t path, opt_path;
+
+    // Inicialização dos caminhos
+    start_path(&path, order+1);
+    start_path(&opt_path, order+1);
+    opt_path.cost = INT_MAX;
+    visited[start_node] = TRUE;
+
+    // Enumeração recursiva
+    path_enumeration_recursion(graph, &opt_path, &path, visited, 0, start_node);
+
+    // Caminho ótimo
+    printf("\noptimal cost = %d; optimal path = ", opt_path.cost);
+    print_int_list(opt_path.nodes, opt_path.size);
+
+    // Finalização
+    free(visited);
+    free(path.nodes);
+    free(opt_path.nodes);
+    return EXIT_SUCCESS;
+}
+
+
+///////////////////////////////// MAIN ////////////////////////////////////////
+
 int main(int argc, char** argv){
-    return 0;
+
+    // Verificação de argumentos
+    if(argc != 2) {
+        printf("usage: %s <N>\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+
+    // Variáveis locais
+    int N = atoi(argv[1]);
+    graph_t *graph = generate_graph(N, RANDOM_SEED);
+
+    // Programa
+    print_graph(graph);
+    start_path_enumeration(graph, START_NODE);
+
+    // Finalização
+    free_graph(graph);
+    return EXIT_SUCCESS;
 }

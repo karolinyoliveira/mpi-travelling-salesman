@@ -12,20 +12,13 @@ ZIP = parallel.zip
 
 # ------------------- # --- DIRETIVAS PRINCIPAIS --- # -------------------- #
 
-# Global
-all: $(SEQ_BIN) $(PAR_BIN)
-
-# Produção do executável
-$(SEQ_BIN):
-	$(CC) pvc-seq.c -o $(SEQ_BIN) -lm
-$(PAR_BIN):
-	$(MPIC) pvc-par.c -o $(PAR_BIN) -lm
-
 # Execução convencional do programa
-runseq: $(SEQ_BIN)
-	./$(SEQ_BIN)
-runpar: $(PAR_BIN)
-	$(MPIR) -np $(NUM_PROCS) ./$(PAR_BIN)
+runseq:
+	$(CC) pvc-seq.c -o $(SEQ_BIN) -lm
+	./$(SEQ_BIN) $(N)
+runpar:
+	$(MPIC) pvc-par.c -o $(PAR_BIN) -lm
+	$(MPIR) -np $(NUM_PROCS) ./$(PAR_BIN) $(N)
 
 # Compressão dos arquivos
 zip: clean
