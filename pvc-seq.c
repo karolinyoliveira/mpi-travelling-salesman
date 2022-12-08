@@ -184,12 +184,8 @@ int path_enumeration_recursion (
     // Variáveis locais
     int cost, next_node, order=graph->order;
 
-    //printf("step: %d; node: %d\n", step, node);
-
     // Finalização do caminho
     if(step == order - 1){
-
-        //printf("__end__\n");
 
         // Verificação de possibilidade de retorno ao nó inicial
         cost = graph->weights[node][path->nodes[0]];
