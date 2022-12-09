@@ -1,3 +1,15 @@
+**Turma: A**
+
+**Número do Grupo: 01**
+
+**Nomes dos integrantes deste grupo que resolveram o trabalho:**
+
+- Karoliny Oliveira Ozias Silva 10368020
+- João Lucas Rodrigues Constantino 11795763
+- Luiz Fernando Silva Eugênio dos Santos 10892680
+- Alexandre Brito Gomes 11857323
+
+
 # MPI Travelling Salesman
 
 O problema do caixeiro viajante consiste em, dado um grafo direcionado representando uma cidade e suas respectivas conexões entre si, encontrar o menor percurso hamiltoniano, isto é, aquele que, ao percorrer todas as cidades única vez cada, resulta na menor distância possível. Nesse contexto, propõe-se uma solução exaustiva para o problema, isto é, via enumeração total, visando a determinar o ganho de desempenho de uma aplicação paralela sobre sua correspondente sequencial. Para tanto, será utilizada a linguagem C, juntamente às bibliotecas OpenMP e MPI, a fim de construir ambas as versões do código. Assim sendo,  a fim de se propor um projeto de paralelização, a análise PCAM será utilizada -- sendo ela referente às técnicas de Particionamento, Comunicação, Aglomeração e Mapeamento. 

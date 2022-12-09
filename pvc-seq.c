@@ -1,3 +1,15 @@
+/*
+Turma: A
+
+Número do Grupo: 01
+
+Nomes dos integrantes deste grupo que resolveram o trabalho:
+Karoliny Oliveira Ozias Silva 10368020
+João Lucas Rodrigues Constantino 11795763
+Luiz Fernando Silva Eugênio dos Santos 10892680
+Alexandre Brito Gomes 11857323
+*/
+
 /////////////////////// IMPORTAÇÕES E DEFINIÇÕES //////////////////////////////
 
 // Dedendências
