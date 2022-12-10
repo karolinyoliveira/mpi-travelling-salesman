@@ -321,7 +321,8 @@ int main(int argc, char** argv){
     N_mapped = size-1==rank ? N_mapped+Q : N_mapped;
     int n_paths = N_mapped*fact(N)/(N-1);
 
-    int** best_paths = build_paths_matrix(N+2, size);
+    //int** best_paths = build_paths_matrix(N+2, size);
+    int* best_paths = (int*) calloc(size*(N+2), sizeof(int)); 
     int* path_cost_v = (int*) calloc(N+2, sizeof(int));
 
     if (rank == 0) {
@@ -363,20 +364,20 @@ int main(int argc, char** argv){
         print_int_list(path_cost_v, N+2);  
     }
 	
-	int* displacements = (int*)malloc(size*sizeof(int));
-	for(int i=0; i<size; i++) displacements[i] = i * (N+2);
-
-	int* counts_recv = (int*)malloc(size*sizeof(int));
-	for(int i=0; i<size; i++) counts_recv[i] = N+2;
-
 	MPI_Barrier(MPI_COMM_WORLD);
-	MPI_Gatherv(path_cost_v,N+2,MPI_INT,best_paths[rank], counts_recv, displacements, MPI_INT, 0 ,MPI_COMM_WORLD);
+	MPI_Gather(path_cost_v, N+2, MPI_INT, best_paths, N+2, MPI_INT, 0 ,MPI_COMM_WORLD);
 
     if (rank==0) {
         printf("\n");
+        
         for(int i=0; i<size; i++) {
-            print_int_list(best_paths[i], N+2);
+            for(int j=0; j<N+2; j++) {
+                printf("%d ", best_paths[(N+2)*i + j ]);
+            }
+            printf("\n");
         }
+        
+        
     }
 
     // Finalização
