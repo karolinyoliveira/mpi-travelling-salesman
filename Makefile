@@ -9,7 +9,7 @@ CFLAGS = -Wall -Wextra -lm
 SEQ_BIN = seq
 PAR_BIN = par
 ZIP = parallel.zip
-N = 10
+N = 9
 
 # ------------------- # --- DIRETIVAS PRINCIPAIS --- # -------------------- #
 

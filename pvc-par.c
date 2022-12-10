@@ -115,6 +115,25 @@ void print_graph(graph_t *graph) {
     printf("\n");
 }
 
+// Cálculo de fatorial
+int fact(int n) {
+    int fact = n;
+    for (int i=1; i<n; i++) {
+        fact = fact * i;
+    }
+    return fact;
+}
+
+// Aloca matriz de tamanho adequado para armazenar os caminhos feitos por cada processo
+int** build_paths_matrix(int n_cities, int n_paths) {
+    int** paths_matrix = (int**) calloc(n_paths, sizeof(int*));
+    for (int i=0; i<n_paths; i++) {
+        paths_matrix[i] = (int*) calloc(n_cities+1, sizeof(int));
+    }
+
+    return paths_matrix;
+}   
+
 ///////////////////////////////// MAIN ////////////////////////////////////////
 
 int main(int argc, char** argv){
@@ -135,27 +154,50 @@ int main(int argc, char** argv){
     graph_t *graph = generate_graph(N, RANDOM_SEED);
 
     // Programa
-    //print_graph(graph);
+    int root_city = 0;
     int Q = (N-1)%(size-1);
     int N_mapped = (N-1-Q)/(size-1); // Número de nós mapeados para cada processo
     N_mapped = N_mapped==0 ? 1 : N_mapped;
+    N_mapped = size-1==rank ? N_mapped+Q : N_mapped;
+    int n_paths = N_mapped*fact(N)/(N-1);
+
+    int** all_paths = build_paths_matrix(N, n_paths);
+    int** best_paths = build_paths_matrix(N, size);
+
+    if (rank == 0) {
+
+        // Alocando para cada processo (com excessão do rank 0)
+        int city_index = 1;
+        for (int i=0; i<size-1; i++) {
+            for (int j=0; j<N_mapped; j++) {
+                MPI_Send(&city_index, 1, MPI_INT, i+1, 0, MPI_COMM_WORLD);
+                city_index++;
+            }
+        }
+        for (int i=0; i<Q; i++) {
+            if (city_index != 0) {
+                MPI_Send(&city_index, 1, MPI_INT, i+1, 0, MPI_COMM_WORLD);
+            } 
+            city_index++;
+        }
+    } else {
+        int* vetores_iniciais = (int*)calloc(N_mapped, sizeof(int));
+		
+        for(int i=0; i<N_mapped; i++) MPI_Recv(&vetores_iniciais[i], 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+        for(int i=0; i<N_mapped; i++) {
+            printf("%d\n", vetores_iniciais[i]);
+        }
+        
+        
+        //int teste;
+        //MPI_Recv(&teste, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+        //printf("%d\n", teste);
+        
+    }
 
 
     // Finalização
     free_graph(graph);
     MPI_Finalize();
     return EXIT_SUCCESS;
-
-    /*
-    int process_rank, size_Of_Cluster;
-
-    MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &size_Of_Cluster);
-    MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
-
-    printf("Hello World from process %d of %d\n", process_rank, size_Of_Cluster);
-
-    MPI_Finalize();
-    return 0;
-    */
 }
