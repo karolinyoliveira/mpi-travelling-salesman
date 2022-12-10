@@ -14,7 +14,7 @@ ZIP = parallel.zip
 
 # Execução convencional do programa
 runseq:
-	$(CC) pvc-seq.c -o $(SEQ_BIN) -lm -fopenmp
+	$(CC) pvc-seq.c -o $(SEQ_BIN) -lm
 	./$(SEQ_BIN) $(N)
 runpar:
 	$(MPIC) pvc-par.c -o $(PAR_BIN) -lm
