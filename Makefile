@@ -3,7 +3,7 @@
 CC = gcc
 MPIC = mpicc
 MPIR = mpirun
-NUM_PROCS = 4
+NUM_PROCS = 8
 RM = rm -f
 CFLAGS = -Wall -Wextra -lm
 SEQ_BIN = seq
@@ -14,11 +14,11 @@ ZIP = parallel.zip
 
 # Execução convencional do programa
 runseq:
-	$(CC) pvc-seq.c -o $(SEQ_BIN) -lm
+	$(CC) pvc-seq.c -o $(SEQ_BIN) -lm -fopenmp
 	./$(SEQ_BIN) $(N)
 runpar:
-	$(MPIC) pvc-par.c -o $(PAR_BIN) -lm
-	$(MPIR) -np $(NUM_PROCS) ./$(PAR_BIN) $(N)
+	$(MPIC) pvc-par.c -o $(PAR_BIN) -lm -fopenmp
+	$(MPIR) --use-hwthread-cpus -np $(NUM_PROCS) --oversubscribe --hostfile halley.txt ./$(PAR_BIN) $(N)
 
 # Compressão dos arquivos
 zip: clean

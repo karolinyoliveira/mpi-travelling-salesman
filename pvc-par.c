@@ -17,6 +17,7 @@ Alexandre Brito Gomes 11857323
 #include <stddef.h>
 #include <limits.h>
 #include <mpi.h>
+#include <omp.h>
 
 // Grafo orientado com matriz de adjacências
 typedef struct _graph_t {
@@ -295,6 +296,18 @@ path_t start_path_enumeration(const graph_t *graph, int proc_city) {
 }
 
 
+////////////////////////////// UTILITÁRIOS ////////////////////////////////////
+
+// Obtém a média de um arranjo de números de dupla precisão
+double get_mean(double *array, int len){
+    double sum = 0.0;
+    int i;
+    for(i=0; i<len; ++i)
+        sum += array[i];
+    return sum / len;
+}
+
+
 ///////////////////////////////// MAIN ////////////////////////////////////////
 
 int main(int argc, char** argv){
@@ -311,6 +324,9 @@ int main(int argc, char** argv){
    	MPI_Comm_size(MPI_COMM_WORLD,&size);
    	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
    	MPI_Status status;
+    double times[NUM_ATTEMPTS];
+    double start, end, mean_time;
+    int iteration;
 
     // Obtenção de N e geração do grafo
     int N = atoi(argv[1]);
@@ -328,69 +344,86 @@ int main(int argc, char** argv){
     int* best_paths = (int*) calloc(size*(N+2), sizeof(int)); 
     int* path_cost_v = (int*) calloc(N+2, sizeof(int));
 
-    // Processo-mestre
-    if (rank == 0) {
+    // PROGRAMA (CÁLCULO DE TEMPO)
+    for(iteration=0; iteration<NUM_ATTEMPTS; ++iteration){
 
-        // Alocando para cada processo (com excessão do rank 0)
-        int city_index = 1;
-        for (int i=1; i<size; i++) {
-            for (int j=0; j<N_mapped; j++) {
-                MPI_Send(&city_index, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+        // Processo-mestre
+        if (rank == 0) {
+
+            // Início do cálculo de tempo
+            start = omp_get_wtime();
+
+            // Alocando para cada processo (com excessão do rank 0)
+            int city_index = 1;
+            for (int i=1; i<size; i++) {
+                for (int j=0; j<N_mapped; j++) {
+                    MPI_Send(&city_index, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+                    city_index++;
+                }
+            }
+            for (int i=1; i<Q+1; i++) {
+                MPI_Send(&city_index, 1, MPI_INT, size-1, 0, MPI_COMM_WORLD);
                 city_index++;
             }
-        }
-        for (int i=1; i<Q+1; i++) {
-            MPI_Send(&city_index, 1, MPI_INT, size-1, 0, MPI_COMM_WORLD);
-            city_index++;
-        }
 
-    } else {
+        } else {
 
-        // Recebendo cidades de cada processo
-        int* cities = (int*)calloc(N_mapped, sizeof(int));
-        for(int i=0; i<N_mapped; i++) MPI_Recv(&cities[i], 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+            // Recebendo cidades de cada processo
+            int* cities = (int*)calloc(N_mapped, sizeof(int));
+            for(int i=0; i<N_mapped; i++) MPI_Recv(&cities[i], 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+            
+            int best_cost = INT_MAX;
+            int* best_path;
+            for(int i=0; i<N_mapped; i++) {
+                path_t opt_path = start_path_enumeration(graph, cities[i]);
+                if (opt_path.cost < best_cost) { // Checar liberação de memória depois
+                    best_cost = opt_path.cost;
+                    best_path = opt_path.nodes;
+                }
+            }
+
+            // Preparando dados para o gather
+            for(int i=0; i<N+1; i++) {
+                path_cost_v[i] = best_path[i];
+            }
+            path_cost_v[N+1] = best_cost;
+        }
         
-        int best_cost = INT_MAX;
-        int* best_path;
-        for(int i=0; i<N_mapped; i++) {
-            path_t opt_path = start_path_enumeration(graph, cities[i]);
-            if (opt_path.cost < best_cost) { // Checar liberação de memória depois
-                best_cost = opt_path.cost;
-                best_path = opt_path.nodes;
-            }
-        }
+        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Gather(path_cost_v, N+2, MPI_INT, best_paths, N+2, MPI_INT, 0 ,MPI_COMM_WORLD);
 
-        // Preparando dados para o gather
-        for(int i=0; i<N+1; i++) {
-            path_cost_v[i] = best_path[i];
+        if (rank==0) {
+            int i, j, argmin=-1, min = INT_MAX;
+            for(i=1; i<size; i++) {
+                if(best_paths[(N+2)*i + N + 1] < min){
+                    argmin = i;
+                    min = best_paths[(N+2)*i + N + 1];
+                }
+                /* IMPRESSÃO
+                for(j=0; j<N+2; j++) {
+                    printf("%d ", best_paths[(N+2)*i + j ]);
+                }
+                printf("\n");
+                */
+            }
+            if(iteration == 0){
+                printf("cost = %d; path = [", min);
+                for(j=0; j<N; j++) {
+                    printf("%d, ", best_paths[(N+2)*argmin + j ]);
+                }
+                printf("%d]\n", best_paths[(N+2)*argmin + j ]);
+            }
+
+            // Finalização
+            end = omp_get_wtime();
+            times[iteration] = end-start;
         }
-        path_cost_v[N+1] = best_cost;
     }
-	
-	MPI_Barrier(MPI_COMM_WORLD);
-	MPI_Gather(path_cost_v, N+2, MPI_INT, best_paths, N+2, MPI_INT, 0 ,MPI_COMM_WORLD);
 
-    if (rank==0) {
-
-        printf("\n");
-        int i, j, argmin=-1, min = INT_MAX;
-        for(i=1; i<size; i++) {
-            if(best_paths[(N+2)*i + N + 1] < min){
-                argmin = i;
-                min = best_paths[(N+2)*i + N + 1];
-            }
-            /* IMPRESSÃO
-            for(j=0; j<N+2; j++) {
-                printf("%d ", best_paths[(N+2)*i + j ]);
-            }
-            printf("\n");
-            */
-        }
-        printf("cost = %d; path = [", min);
-        for(j=0; j<N; j++) {
-            printf("%d, ", best_paths[(N+2)*argmin + j ]);
-        }
-        printf("%d]\n", best_paths[(N+2)*argmin + j ]);
+    // Impressão do tempo
+    if(rank == 0){
+        mean_time = get_mean(times, NUM_ATTEMPTS);
+        printf("Tempo de resposta sem considerar E/S, em segundos: %.3lfs\n", mean_time);
     }
 
     // Finalização
