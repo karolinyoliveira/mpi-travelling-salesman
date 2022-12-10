@@ -17,7 +17,7 @@ runseq:
 	$(CC) pvc-seq.c -o $(SEQ_BIN) -lm -fopenmp
 	./$(SEQ_BIN) $(N)
 runpar:
-	$(MPIC) pvc-par.c -o $(PAR_BIN) -lm -fopenmp
+	$(MPIC) pvc-par.c -o $(PAR_BIN) -lm
 	$(MPIR) -np $(NUM_PROCS) ./$(PAR_BIN) $(N)
 
 # Compressão dos arquivos

@@ -17,7 +17,6 @@ Alexandre Brito Gomes 11857323
 #include <stddef.h>
 #include <limits.h>
 #include <mpi.h>
-#include <omp.h>
 
 // Grafo orientado com matriz de adjacências
 typedef struct _graph_t {
