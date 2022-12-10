@@ -168,22 +168,22 @@ int main(int argc, char** argv){
 
         // Alocando para cada processo (com excessão do rank 0)
         int city_index = 1;
-        for (int i=0; i<size-1; i++) {
+        for (int i=1; i<size; i++) {
             for (int j=0; j<N_mapped; j++) {
-                MPI_Send(&city_index, 1, MPI_INT, i+1, 0, MPI_COMM_WORLD);
+                MPI_Send(&city_index, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
                 city_index++;
             }
         }
-        for (int i=0; i<Q; i++) {
-            if (city_index != 0) {
-                MPI_Send(&city_index, 1, MPI_INT, i+1, 0, MPI_COMM_WORLD);
-            } 
+        for (int i=1; i<Q+1; i++) {
+            MPI_Send(&city_index, 1, MPI_INT, size-1, 0, MPI_COMM_WORLD);
             city_index++;
         }
+
     } else {
+        // Recebendo cidades de cada processo
         int* vetores_iniciais = (int*)calloc(N_mapped, sizeof(int));
-		
         for(int i=0; i<N_mapped; i++) MPI_Recv(&vetores_iniciais[i], 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+        
         for(int i=0; i<N_mapped; i++) {
             printf("%d\n", vetores_iniciais[i]);
         }
