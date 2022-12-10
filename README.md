@@ -10,6 +10,23 @@
 - Alexandre Brito Gomes 11857323
 
 
+# Execução
+
+Para executar o programa, entre no terminal:
+
+```
+make runpar
+```
+
+ou
+
+```
+make runseq
+```
+
+para executar respectivamente as versões paralela e sequencial. Os parâmetros **N** e **NUM_PROCS** declarados no `Makefile` determinam respectivamente o número de processos a serem usados e de cidades no problema. Por padrão, ambos são definidos como **8**. A aplicação foi desenvolvida considerando um número de cidades maior ou igual ao número de processos. 
+
+
 # MPI Travelling Salesman
 
 O problema do caixeiro viajante consiste em, dado um grafo direcionado representando uma cidade e suas respectivas conexões entre si, encontrar o menor percurso hamiltoniano, isto é, aquele que, ao percorrer todas as cidades única vez cada, resulta na menor distância possível. Nesse contexto, propõe-se uma solução exaustiva para o problema, isto é, via enumeração total, visando a determinar o ganho de desempenho de uma aplicação paralela sobre sua correspondente sequencial. Para tanto, será utilizada a linguagem C, juntamente às bibliotecas OpenMP e MPI, a fim de construir ambas as versões do código. Assim sendo,  a fim de se propor um projeto de paralelização, a análise PCAM será utilizada -- sendo ela referente às técnicas de Particionamento, Comunicação, Aglomeração e Mapeamento. 
