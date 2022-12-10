@@ -16,7 +16,6 @@ Alexandre Brito Gomes 11857323
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
-#include <omp.h>
 
 // Grafo orientado com matriz de adjacências
 typedef struct _graph_t {
@@ -270,7 +269,7 @@ int start_path_enumeration(const graph_t *graph, int start_node, bool print_resu
 
     // Caminho ótimo
     if(print_result == TRUE) {
-        printf("\noptimal cost = %d; optimal path = ", opt_path.cost);
+        printf("optimal cost = %d; optimal path = ", opt_path.cost);
         print_int_list(opt_path.nodes, opt_path.size);
     }
 
@@ -279,17 +278,6 @@ int start_path_enumeration(const graph_t *graph, int start_node, bool print_resu
     free(path.nodes);
     free(opt_path.nodes);
     return EXIT_SUCCESS;
-}
-
-////////////////////////////// UTILITÁRIOS ////////////////////////////////////
-
-// Obtém a média de um arranjo de números de dupla precisão
-double get_mean(double *array, int len){
-    double sum = 0.0;
-    int i;
-    for(i=0; i<len; ++i)
-        sum += array[i];
-    return sum / len;
 }
 
 
@@ -307,9 +295,6 @@ int main(int argc, char** argv){
     int N = atoi(argv[1]);
     graph_t *graph = generate_graph(N, RANDOM_SEED);
     bool print_paths = FALSE, print_result = TRUE;
-    double times[NUM_ATTEMPTS];
-    double start, end, mean_time;
-    int iteration;
 
     // Programa
     #if PRINT_GRAPH == 1
@@ -317,25 +302,7 @@ int main(int argc, char** argv){
     #endif
     start_path_enumeration(graph, START_NODE, print_result, print_paths);
 
-    // Cálculo de tempo (sem operações de I/O)
-    print_paths = FALSE;
-    print_result = FALSE;
-    for(iteration=0; iteration<NUM_ATTEMPTS; ++iteration){
-
-        // Início do cálculo de tempo
-        start = omp_get_wtime();
-
-        // Programa
-        start_path_enumeration(graph, START_NODE, print_result, print_paths);
-        
-        // Finalização
-        end = omp_get_wtime();
-        times[iteration] = end-start;
-    }
-
     // Finalização
-    mean_time = get_mean(times, NUM_ATTEMPTS);
-    printf("Tempo de resposta sem considerar E/S, em segundos: %.3lfs\n", mean_time);
     free_graph(graph);
     return EXIT_SUCCESS;
 }
