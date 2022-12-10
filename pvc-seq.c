@@ -41,7 +41,7 @@ typedef char bool;
 #define START_NODE 0
 #define MIN_WEIGHT 1
 #define MAX_WEIGHT 100
-#define NUM_ATTEMPTS 32
+#define NUM_ATTEMPTS 1
 #define PRINT_GRAPH 0
 
 
@@ -306,7 +306,7 @@ int main(int argc, char** argv){
     // Variáveis locais
     int N = atoi(argv[1]);
     graph_t *graph = generate_graph(N, RANDOM_SEED);
-    bool print_paths = FALSE, print_result = TRUE;
+    bool print_paths = TRUE, print_result = TRUE;
     double times[NUM_ATTEMPTS];
     double start, end, mean_time;
     int iteration;
