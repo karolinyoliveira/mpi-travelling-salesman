@@ -129,7 +129,7 @@ int fact(int n) {
 int** build_paths_matrix(int n_cities, int n_paths) {
     int** paths_matrix = (int**) calloc(n_paths, sizeof(int*));
     for (int i=0; i<n_paths; i++) {
-        paths_matrix[i] = (int*) calloc(n_cities+1, sizeof(int));
+        paths_matrix[i] = (int*) calloc(n_cities, sizeof(int));
     }
 
     return paths_matrix;
@@ -321,6 +321,9 @@ int main(int argc, char** argv){
     N_mapped = size-1==rank ? N_mapped+Q : N_mapped;
     int n_paths = N_mapped*fact(N)/(N-1);
 
+    int** best_paths = build_paths_matrix(N+2, size);
+    int* path_cost_v = (int*) calloc(N+2, sizeof(int));
+
     if (rank == 0) {
 
         // Alocando para cada processo (com excessão do rank 0)
@@ -341,18 +344,45 @@ int main(int argc, char** argv){
         int* cities = (int*)calloc(N_mapped, sizeof(int));
         for(int i=0; i<N_mapped; i++) MPI_Recv(&cities[i], 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
         
-        // start_path_enumeration
+        int best_cost = INT_MAX;
+        int* best_path;
         for(int i=0; i<N_mapped; i++) {
             path_t opt_path = start_path_enumeration(graph, cities[i]);
-            printf("\noptimal cost = %d; optimal path = ", opt_path.cost);
-            print_int_list(opt_path.nodes, opt_path.size);
+            if (opt_path.cost < best_cost) { // Checar liberação de memória depois
+                best_cost = opt_path.cost;
+                best_path = opt_path.nodes;
+            }
         }
-        
-    }
 
+        // Preparando dados para o gather
+        for(int i=0; i<N+1; i++) {
+            path_cost_v[i] = best_path[i];
+        }
+        path_cost_v[N+1] = best_cost;  
+        printf("%d: ", rank);    
+        print_int_list(path_cost_v, N+2);  
+    }
+	
+	int* displacements = (int*)malloc(size*sizeof(int));
+	for(int i=0; i<size; i++) displacements[i] = i * (N+2);
+
+	int* counts_recv = (int*)malloc(size*sizeof(int));
+	for(int i=0; i<size; i++) counts_recv[i] = N+2;
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Gatherv(path_cost_v,N+2,MPI_INT,best_paths[rank], counts_recv, displacements, MPI_INT, 0 ,MPI_COMM_WORLD);
+
+    if (rank==0) {
+        printf("\n");
+        for(int i=0; i<size; i++) {
+            print_int_list(best_paths[i], N+2);
+        }
+    }
 
     // Finalização
     free_graph(graph);
+    free(best_paths);
+    free(path_cost_v);
     MPI_Finalize();
     return EXIT_SUCCESS;
 }
