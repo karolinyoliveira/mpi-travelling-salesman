@@ -12,7 +12,7 @@ Alexandre Brito Gomes 11857323
 
 /////////////////////// IMPORTAÇÕES E DEFINIÇÕES //////////////////////////////
 
-// Dedendências
+// Dependências
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
