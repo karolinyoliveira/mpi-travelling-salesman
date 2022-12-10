@@ -15,6 +15,7 @@ Alexandre Brito Gomes 11857323
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
+#include <limits.h>
 #include <mpi.h>
 #include <omp.h>
 
@@ -134,6 +135,165 @@ int** build_paths_matrix(int n_cities, int n_paths) {
     return paths_matrix;
 }   
 
+///////////////////////// LISTA DE INTEIROS ///////////////////////////////////
+
+// Gera uma lista de inteiros com o tamanho fornecido
+int *generate_int_list(int length) {
+    if(length < 1){
+        printf("length must be greater than zero\n");
+        return NULL;
+    }
+    int *list = (int *) calloc(length, sizeof(int));
+    if(list == NULL){
+        printf("failed to malloc list\n");
+        return NULL;
+    }
+    return list;
+}
+
+
+// Copia uma lista de inteiros a outra
+void copy_int_list(int *src, int *dest, int len) {
+    int i;
+    for(i=0; i<len; ++i)
+        dest[i] = src[i];
+}
+
+
+// Imprime uma lista de inteiros
+void print_int_list(int *list, int len) {
+    int i, lim=len-1;
+    printf("[");
+    for(i=0; i<lim; ++i)
+        printf("%d, ", list[i]);
+    printf("%d]\n", list[i]);
+}
+
+
+////////////////////////////// CAMINHOS ///////////////////////////////////////
+
+// Inicializa um caminho
+void start_path(path_t *path, int size){
+    path->nodes = generate_int_list(size);
+    path->size = size;
+    path->cost = 0;
+}
+
+
+// Obtém o custo de um caminho
+void calculate_path_cost(path_t *path, int **weights){
+    int i, cost = 0;
+    for(i=1; i<path->size; ++i)
+        cost += weights[path->nodes[i-1]][path->nodes[i]];
+    path->cost = cost;
+}
+
+
+//////////////////// PROBLEMA DO CAIXEIRO VIAJANTE ////////////////////////////
+
+/**
+ * @brief Função de recursão da enumeração de caminhos.
+ * 
+ * @param graph Grafo representante do problema.
+ * @param visited Vetor de visitas aos nós. Deve ter comprimento = graph->order.
+ * @param opt_path Caminho ótimo local para os nós. Deve ter comprimento = graph->order + 1
+ * @param path Caminho dos nós. Deve ter comprimento = graph->order + 1.
+ * @param step Passo atual. Não deve nem alcançar nem ultrapassar graph->order.
+ * @param node Nó atual. Deve pertencer ao grafo.
+ */
+int path_enumeration_recursion (
+    const graph_t *graph, 
+    path_t *opt_path, 
+    path_t *path, 
+    bool *visited, 
+    int step, 
+    int node
+){
+    // Atualização
+    path->nodes[step] = node;
+
+    // Variáveis locais
+    int cost, next_node, order=graph->order;
+
+    // Finalização do caminho
+    if(step == order - 1){
+
+        // Verificação de possibilidade de retorno ao nó inicial
+        cost = graph->weights[node][path->nodes[0]];
+        if(cost != 0) {
+
+            // Atualização do caminho
+            path->nodes[step+1] = path->nodes[0];
+            calculate_path_cost(path, graph->weights);
+
+            // Verificação de otimalidade
+            if(path->cost < opt_path->cost) {
+                copy_int_list(path->nodes, opt_path->nodes, path->size);
+                opt_path->cost = path->cost;
+            }
+            
+            return EXIT_SUCCESS;
+        }
+
+        return EXIT_FAILURE;
+    }
+
+    // Verificação das adjacências do nó
+    for(next_node = 0; next_node<order; ++next_node) {
+
+        // Verificação de alcance
+        if(visited[next_node] == FALSE) {
+            cost = graph->weights[node][next_node] != 0;
+            if(cost != 0) {
+
+                // Recursão
+                visited[next_node] = TRUE;
+                path_enumeration_recursion(graph, opt_path, path, visited, step+1, next_node);
+
+                // Desfaz alterações para manter estabilidade da recursão
+                visited[next_node] = FALSE;
+            }
+        }
+    }
+
+    return EXIT_SUCCESS;
+}
+
+
+
+// Enumeração dos possíveis caminhos do problema do caixeiro viajante considerando primeiro passo dado
+path_t start_path_enumeration(const graph_t *graph, int proc_city) {
+
+    // Geração de vetores de utilidade
+    int start_node = 0;
+    int order = graph->order;
+    bool *visited = (bool *) calloc(order, sizeof(bool));
+    path_t path, opt_path;
+
+    // Inicialização dos caminhos
+    start_path(&path, order+1);
+    start_path(&opt_path, order+1);
+    opt_path.cost = INT_MAX;
+    visited[0] = TRUE;
+
+    // Adicionando primeira execução 
+    path.nodes[0] = start_node;
+
+    int cost, next_node=  graph->order;
+
+    next_node = proc_city;
+    cost = graph->weights[start_node][next_node] != 0;
+
+    // Recursão
+    visited[next_node] = TRUE;
+    path_enumeration_recursion(graph, &opt_path, &path, visited, 1, next_node);
+
+    // Finalização
+    free(visited);
+    free(path.nodes);
+    return opt_path;
+}
+
 ///////////////////////////////// MAIN ////////////////////////////////////////
 
 int main(int argc, char** argv){
@@ -181,17 +341,15 @@ int main(int argc, char** argv){
 
     } else {
         // Recebendo cidades de cada processo
-        int* vetores_iniciais = (int*)calloc(N_mapped, sizeof(int));
-        for(int i=0; i<N_mapped; i++) MPI_Recv(&vetores_iniciais[i], 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+        int* cities = (int*)calloc(N_mapped, sizeof(int));
+        for(int i=0; i<N_mapped; i++) MPI_Recv(&cities[i], 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
         
+        // start_path_enumeration
         for(int i=0; i<N_mapped; i++) {
-            printf("%d\n", vetores_iniciais[i]);
+            path_t opt_path = start_path_enumeration(graph, cities[i]);
+            printf("\noptimal cost = %d; optimal path = ", opt_path.cost);
+            print_int_list(opt_path.nodes, opt_path.size);
         }
-        
-        
-        //int teste;
-        //MPI_Recv(&teste, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
-        //printf("%d\n", teste);
         
     }
 
