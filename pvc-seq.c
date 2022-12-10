@@ -42,6 +42,7 @@ typedef char bool;
 #define MIN_WEIGHT 1
 #define MAX_WEIGHT 100
 #define NUM_ATTEMPTS 32
+#define PRINT_GRAPH 0
 
 
 //////////////////////////////// GRAFO ////////////////////////////////////////
@@ -251,7 +252,7 @@ int path_enumeration_recursion (
 
 
 // Enumeração dos possíveis caminhos do problema do caixeiro viajante
-int start_path_enumeration(const graph_t *graph, int start_node, bool print_paths) {
+int start_path_enumeration(const graph_t *graph, int start_node, bool print_result, bool print_paths) {
 
     // Geração de vetores de utilidade
     int order = graph->order;
@@ -268,7 +269,7 @@ int start_path_enumeration(const graph_t *graph, int start_node, bool print_path
     path_enumeration_recursion(graph, &opt_path, &path, visited, 0, start_node, print_paths);
 
     // Caminho ótimo
-    if(print_paths == TRUE) {
+    if(print_result == TRUE) {
         printf("\noptimal cost = %d; optimal path = ", opt_path.cost);
         print_int_list(opt_path.nodes, opt_path.size);
     }
@@ -305,24 +306,27 @@ int main(int argc, char** argv){
     // Variáveis locais
     int N = atoi(argv[1]);
     graph_t *graph = generate_graph(N, RANDOM_SEED);
-    bool print_paths = TRUE;
+    bool print_paths = FALSE, print_result = TRUE;
     double times[NUM_ATTEMPTS];
     double start, end, mean_time;
     int iteration;
 
     // Programa
-    print_graph(graph);
-    start_path_enumeration(graph, START_NODE, print_paths);
+    #if PRINT_GRAPH == 1
+        print_graph(graph);
+    #endif
+    start_path_enumeration(graph, START_NODE, print_result, print_paths);
 
     // Cálculo de tempo (sem operações de I/O)
     print_paths = FALSE;
+    print_result = FALSE;
     for(iteration=0; iteration<NUM_ATTEMPTS; ++iteration){
 
         // Início do cálculo de tempo
         start = omp_get_wtime();
 
         // Programa
-        start_path_enumeration(graph, START_NODE, print_paths);
+        start_path_enumeration(graph, START_NODE, print_result, print_paths);
         
         // Finalização
         end = omp_get_wtime();
