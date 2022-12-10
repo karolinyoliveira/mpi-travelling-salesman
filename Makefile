@@ -15,7 +15,7 @@ N = 10
 
 # Execução convencional do programa
 runseq:
-	$(CC) pvc-seq.c -o $(SEQ_BIN) -lm
+	$(CC) pvc-seq.c -o $(SEQ_BIN) -lm -fopenmp
 	./$(SEQ_BIN) $(N)
 runpar:
 	$(MPIC) pvc-par.c -o $(PAR_BIN) -lm -fopenmp
