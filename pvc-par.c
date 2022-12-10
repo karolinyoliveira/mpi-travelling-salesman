@@ -10,7 +10,7 @@ Luiz Fernando Silva Eugênio dos Santos 10892680
 Alexandre Brito Gomes 11857323
 */
 
-// Dedendências
+// Dependências
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
