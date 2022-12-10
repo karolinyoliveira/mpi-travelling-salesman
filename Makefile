@@ -19,7 +19,7 @@ runseq:
 	./$(SEQ_BIN) $(N)
 runpar:
 	$(MPIC) pvc-par.c -o $(PAR_BIN) -lm -fopenmp
-	$(MPIR) -np $(NUM_PROCS) --mca opal_warn_on_missing_libcuda 0 ./$(PAR_BIN) $(N)
+	$(MPIR) -np $(NUM_PROCS) ./$(PAR_BIN) $(N)
 
 # Compressão dos arquivos
 zip: clean

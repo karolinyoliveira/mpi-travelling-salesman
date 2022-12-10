@@ -360,22 +360,36 @@ int main(int argc, char** argv){
             path_cost_v[i] = best_path[i];
         }
         path_cost_v[N+1] = best_cost;  
-        printf("%d: ", rank);    
-        print_int_list(path_cost_v, N+2);  
+
+        // IMPRESSÃO
+        // printf("%d: ", rank);    
+        // print_int_list(path_cost_v, N+2);  
     }
 	
 	MPI_Barrier(MPI_COMM_WORLD);
 	MPI_Gather(path_cost_v, N+2, MPI_INT, best_paths, N+2, MPI_INT, 0 ,MPI_COMM_WORLD);
 
     if (rank==0) {
+
         printf("\n");
-        
-        for(int i=0; i<size; i++) {
-            for(int j=0; j<N+2; j++) {
+        int i, j, argmin=-1, min = INT_MAX;
+        for(i=1; i<size; i++) {
+            if(best_paths[(N+2)*i + N + 1] < min){
+                argmin = i;
+                min = best_paths[(N+2)*i + N + 1];
+            }
+            // IMPRESSÃO
+            for(j=0; j<N+2; j++) {
                 printf("%d ", best_paths[(N+2)*i + j ]);
             }
             printf("\n");
+            
         }
+        printf("cost = %d; path = [", min);
+        for(j=0; j<N; j++) {
+            printf("%d, ", best_paths[(N+2)*argmin + j ]);
+        }
+        printf("%d]\n", best_paths[(N+2)*argmin + j ]);
         
         
     }
