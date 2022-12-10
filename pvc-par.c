@@ -42,6 +42,7 @@ typedef char bool;
 #define START_NODE 0
 #define MIN_WEIGHT 1
 #define MAX_WEIGHT 100
+#define NUM_ATTEMPTS 32
 
 //////////////////////////////// GRAFO ////////////////////////////////////////
 
@@ -294,9 +295,11 @@ path_t start_path_enumeration(const graph_t *graph, int proc_city) {
     return opt_path;
 }
 
+
 ///////////////////////////////// MAIN ////////////////////////////////////////
 
 int main(int argc, char** argv){
+    
     // Verificação de argumentos
     if(argc != 2) {
         printf("usage: %s <N>\n", argv[0]);
@@ -310,6 +313,7 @@ int main(int argc, char** argv){
    	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
    	MPI_Status status;
 
+    // Obtenção de N e geração do grafo
     int N = atoi(argv[1]);
     graph_t *graph = generate_graph(N, RANDOM_SEED);
 
@@ -325,6 +329,7 @@ int main(int argc, char** argv){
     int* best_paths = (int*) calloc(size*(N+2), sizeof(int)); 
     int* path_cost_v = (int*) calloc(N+2, sizeof(int));
 
+    // Processo-mestre
     if (rank == 0) {
 
         // Alocando para cada processo (com excessão do rank 0)
@@ -341,6 +346,7 @@ int main(int argc, char** argv){
         }
 
     } else {
+
         // Recebendo cidades de cada processo
         int* cities = (int*)calloc(N_mapped, sizeof(int));
         for(int i=0; i<N_mapped; i++) MPI_Recv(&cities[i], 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
@@ -359,11 +365,7 @@ int main(int argc, char** argv){
         for(int i=0; i<N+1; i++) {
             path_cost_v[i] = best_path[i];
         }
-        path_cost_v[N+1] = best_cost;  
-
-        // IMPRESSÃO
-        // printf("%d: ", rank);    
-        // print_int_list(path_cost_v, N+2);  
+        path_cost_v[N+1] = best_cost;
     }
 	
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -378,20 +380,18 @@ int main(int argc, char** argv){
                 argmin = i;
                 min = best_paths[(N+2)*i + N + 1];
             }
-            // IMPRESSÃO
+            /* IMPRESSÃO
             for(j=0; j<N+2; j++) {
                 printf("%d ", best_paths[(N+2)*i + j ]);
             }
             printf("\n");
-            
+            */
         }
         printf("cost = %d; path = [", min);
         for(j=0; j<N; j++) {
             printf("%d, ", best_paths[(N+2)*argmin + j ]);
         }
         printf("%d]\n", best_paths[(N+2)*argmin + j ]);
-        
-        
     }
 
     // Finalização
