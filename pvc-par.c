@@ -321,9 +321,6 @@ int main(int argc, char** argv){
     N_mapped = size-1==rank ? N_mapped+Q : N_mapped;
     int n_paths = N_mapped*fact(N)/(N-1);
 
-    int** all_paths = build_paths_matrix(N, n_paths);
-    int** best_paths = build_paths_matrix(N, size);
-
     if (rank == 0) {
 
         // Alocando para cada processo (com excessão do rank 0)
