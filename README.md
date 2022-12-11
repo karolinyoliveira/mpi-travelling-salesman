@@ -24,7 +24,7 @@ ou
 make runseq
 ```
 
-para executar respectivamente as versões paralela e sequencial. Os parâmetros **N** e **NUM_PROCS** declarados no `Makefile` determinam respectivamente o número de processos a serem usados e de cidades no problema. Por padrão, ambos são definidos como **8**. A aplicação foi desenvolvida considerando um número de cidades maior ou igual ao número de processos. 
+para executar respectivamente as versões paralela e sequencial. Os parâmetros **NUM_PROCS** e **N** declarados no `Makefile` determinam respectivamente o número de processos a serem usados e de cidades no problema. Por padrão, ambos são definidos como **8**. A aplicação foi desenvolvida considerando um número de cidades maior ou igual ao número de processos. 
 
 
 # MPI Travelling Salesman
@@ -33,7 +33,7 @@ O problema do caixeiro viajante consiste em, dado um grafo direcionado represent
 
 ## Particionamento
 
-Considere um grafo $G$ como uma tupla $\left(V, A \right)$, sendo $V$ o conjunto de vértices desse grafo, e $A$ o seu conjunto de arestas. Desse modo, sendo $N = \left| V \right|$, pode-se enumerar os vértices como $\lbrace v_1, v_2, \dots, v_N \rbrace$; considere, ainda, $adj(v_i)$, $i\in \lbrace 1,2,\dots,N \rbrace$, como o conjunto de vértices adjacentes ao nó $v_i$, isto é, $adj(v_i) = \lbrace v_j \mid \exists \left( v_i, v_j \right) \in A \rbrace $. Daí, dado um caminho $p$ contendo uma sequência de vértices, pode-se definir ${valid \textunderscore adj} p(v_i) = \lbrace v_j \mid \exists \left( v_i, v_j \right) \in A  \land v_j \notin p \rbrace$, isto é, o conjunto de vértices acessíveis a seguir que não pertençam ao caminho previamente percorrido, e $cost\left(p\right) = \sum_{i=1}^{\left| p \right|} c_{i-1, i}$, em que $c_{i,j}$ é o peso da aresta $\left( v_i, v_j \right)$, como o custo total do caminho $p$. Por fim, considerando $M_{pv_i} = \left| {valid\_adj}_{p}(v_i) \right|$, propõe-se o seguinte grafo de dependências de tarefas:
+Considere um grafo $G$ como uma tupla $\left(V, A \right)$, sendo $V$ o conjunto de vértices desse grafo, e $A$ o seu conjunto de arestas. Desse modo, sendo $N = \left| V \right|$, pode-se enumerar os vértices como $\lbrace v_1, v_2, \dots, v_N \rbrace$; considere, ainda, $adj(v_i)$, $i\in \lbrace 1,2,\dots,N \rbrace$, como o conjunto de vértices adjacentes ao nó $v_i$, isto é, $adj(v_i) = \lbrace v_j \mid \exists \left( v_i, v_j \right) \in A \rbrace $. Daí, dado um caminho $p$ contendo uma sequência de vértices, pode-se definir ${valid \textunderscore adj} p(v_i) = \lbrace v_j \mid \exists \left( v_i, v_j \right) \in A  \land v_j \notin p \rbrace$, isto é, o conjunto de vértices acessíveis a seguir que não pertençam ao caminho previamente percorrido, e $cost\left(p\right) = \sum_{i=1}^{\left| p \right|} c_{i-1, i}$, em que $c_{i,j}$ é o peso da aresta $\left( v_i, v_j \right)$, como o custo total do caminho $p$. Por fim, considerando $M_{pv_i} = \left| {valid \textunderscore adj}_{p}(v_i) \right|$, propõe-se o seguinte grafo de dependências de tarefas:
 
 ```mermaid
 %% Paralelização do problema do caixeiro viajante
