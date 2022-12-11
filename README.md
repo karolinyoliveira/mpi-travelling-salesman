@@ -118,7 +118,7 @@ subgraph End
 end
 ```
 
-Logo, inicia-se convertendo o argumento de linha de comando no parâmetro $N$ do problema, que será utilizado para gerar um grafo densamente conectado de maneira pseudoaleatória. Daí, uma vez obtido $G$, dá-se início ao processo de enumeração dos possíveis caminhos existentes: isso é realizado por meio de um particionamento por dados, em que cada tarefa recebe um nó inicial e, a partir dele, constrói um caminho de maneira recursiva, a cada passo enumerando todas as possibilidades e as passando para novas tarefas. Ao final da enumeração, computa-se o custo total de cada um dos caminhos construídos, iniciando -- então -- o processo de redução por minimização -- isto é, dois a dois, seleciona-se o caminho de custo mínimo, finalizando essa etapa ao selecionar o caminho ótimo $p^*$ e seu respectivo $cost(p^*)$.
+Logo, inicia-se convertendo o argumento de linha de comando no parâmetro $N$ do problema, que será utilizado para gerar um grafo densamente conectado de maneira pseudoaleatória. Daí, uma vez obtido $G$, dá-se início ao processo de enumeração dos possíveis caminhos existentes: isso é realizado por meio de um particionamento por dados, em que cada tarefa recebe um nó inicial e, a partir dele, constrói um caminho de maneira recursiva, a cada passo enumerando todas as possibilidades e as passando para novas tarefas. Ao final da enumeração, computa-se o custo total de cada um dos caminhos construídos, iniciando -- então -- o processo de redução por minimização -- isto é, dois a dois, seleciona-se o caminho de custo mínimo, finalizando essa etapa ao selecionar o caminho ótimo $p^\*$ e seu respectivo $cost(p^\*)$.
 
 ## Comunicação
 
